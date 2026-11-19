@@ -1,6 +1,6 @@
 {
   "name": "@textox/plugin-sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Contract layer between Textox and its plugins",
   "license": "MIT",
   "type": "module",
@@ -12,7 +12,11 @@
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "sideEffects": false,
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
