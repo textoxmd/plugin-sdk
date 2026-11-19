@@ -1,4 +1,4 @@
-import type { PluginManifest } from './types';
+import type { PluginManifest } from './types.js';
 /** 清单校验失败原因；声明顺序即 `validateManifest` 的检查顺序。 */
 export type ManifestIssue = 'not-object' | 'missing-id' | 'invalid-id' | 'missing-name' | 'missing-version' | 'invalid-version' | 'missing-min-app-version' | 'invalid-min-app-version' | 'missing-author';
 export type ManifestResult = {

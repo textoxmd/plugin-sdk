@@ -1,4 +1,4 @@
-import type { SettingsField } from './types';
+import type { SettingsField } from './types.js';
 
 /**
  * 按字段声明计算生效配置：缺省回填 `default`，未声明的键不保留。

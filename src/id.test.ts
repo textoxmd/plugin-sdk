@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isValidPluginId, validatePluginId } from './id';
+import { isValidPluginId, validatePluginId } from './id.js';
 
 const ACCEPTED = [
   'app.textox.table',

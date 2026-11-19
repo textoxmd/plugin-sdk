@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SHARED_MODULES, isSharedModule } from './shared-modules';
+import { SHARED_MODULES, isSharedModule } from './shared-modules.js';
 
 describe('isSharedModule', () => {
   it.each([

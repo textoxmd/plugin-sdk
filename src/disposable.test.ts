@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { DisposableStore, toDisposable } from './disposable';
+import { DisposableStore, toDisposable } from './disposable.js';
 
 describe('DisposableStore', () => {
   it('disposes in reverse registration order', () => {

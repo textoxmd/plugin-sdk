@@ -1,4 +1,4 @@
-import { isValidPluginId } from './id';
+import { isValidPluginId } from './id.js';
 const SEMVER_RE = /^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/;
 function isRecord(value) {
     return typeof value === 'object' && value !== null && !Array.isArray(value);

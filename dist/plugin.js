@@ -1,4 +1,4 @@
-import { DisposableStore } from './disposable';
+import { DisposableStore } from './disposable.js';
 /**
  * 插件基类。生命周期由宿主驱动：加载模块 → `new` → `onload()`；
  * 停用时先 `onunload()`（插件自己的异步收尾），宿主须 `await` 其 Promise 后再 `dispose()`

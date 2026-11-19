@@ -1,4 +1,4 @@
-import type { Disposable } from './disposable';
+import type { Disposable } from './disposable.js';
 /** 插件清单：只有元数据，能力一律由代码（`Plugin.onload`）注册，清单不承载能力投影。 */
 export interface PluginManifest {
     id: string;

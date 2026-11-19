@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { validateManifest } from './manifest';
-import type { ManifestIssue } from './manifest';
-import type { PluginManifest } from './types';
+import { validateManifest } from './manifest.js';
+import type { ManifestIssue } from './manifest.js';
+import type { PluginManifest } from './types.js';
 
 const base = {
   id: 'app.textox.hello-world',

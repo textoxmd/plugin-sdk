@@ -1,4 +1,4 @@
-import { DisposableStore, type Disposable } from './disposable';
+import { DisposableStore, type Disposable } from './disposable.js';
 import type {
   CommandContribution,
   EmbedBridgeOptions,
@@ -6,7 +6,7 @@ import type {
   PluginApp,
   PluginManifest,
   SettingsField,
-} from './types';
+} from './types.js';
 
 /**
  * 插件基类。生命周期由宿主驱动：加载模块 → `new` → `onload()`；

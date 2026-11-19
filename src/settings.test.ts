@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { applySettingsDefaults } from './settings';
-import type { SettingsField } from './types';
+import { applySettingsDefaults } from './settings.js';
+import type { SettingsField } from './types.js';
 
 const fields: SettingsField[] = [
   { key: 'apiKey', type: 'password', default: '', labelKey: 'apiKey' },

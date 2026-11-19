@@ -1,5 +1,5 @@
-import { isValidPluginId } from './id';
-import type { PluginManifest } from './types';
+import { isValidPluginId } from './id.js';
+import type { PluginManifest } from './types.js';
 
 const SEMVER_RE = /^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/;
 

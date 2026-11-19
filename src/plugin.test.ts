@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { toDisposable } from './disposable';
-import { Plugin } from './plugin';
+import { toDisposable } from './disposable.js';
+import { Plugin } from './plugin.js';
 import type {
   CommandContribution,
   ContributionKind,
@@ -9,7 +9,7 @@ import type {
   PluginApp,
   PluginManifest,
   SettingsField,
-} from './types';
+} from './types.js';
 
 const manifest: PluginManifest = {
   id: 'app.textox.demo',
