@@ -11,3 +11,5 @@ export * from './shared-modules.js';
 export * from './exporter.js';
 export * from './image-uploader.js';
 export * from './agent.js';
+export * from './theme.js';
+export * from './dialogs.js';

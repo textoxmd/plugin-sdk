@@ -103,8 +103,19 @@ function createApp() {
         vars ? `${key}:${JSON.stringify(vars)}` : key
       ),
       addMessages: vi.fn(),
+      language: () => 'zh-CN',
     },
-    toast: { success: vi.fn(), error: vi.fn() },
+    theme: {
+      appearance: 'light' as const,
+      applyCodeHighlightTheme: vi.fn(),
+      subscribe: vi.fn(() => toDisposable(() => {})),
+      codeHighlightThemeDefaults: vi.fn(async () => ({})),
+    },
+    dialogs: {
+      pickFile: vi.fn(async () => null),
+      confirm: vi.fn(async () => false),
+    },
+    toast: { info: vi.fn(), success: vi.fn(), error: vi.fn() },
     exporters: { register: capability('exporter') },
     imageUploader: { register: capability('imageUploader') },
     agent: {

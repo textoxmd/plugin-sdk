@@ -65,13 +65,16 @@ export const manifest: PluginManifest = {
 
 | 能力 | 说明 |
 |------|------|
-| `app.settings` | `get` / `set` / `all`，按插件隔离持久化；配合 `static settingsFields` 由宿主渲染设置界面 |
-| `app.i18n` | `t(key, vars)` 与 `addMessages(locales, defaultLocale)`；语言码用宿主形态（`zh-CN`、`en-US`） |
-| `app.toast` | `success` / `error` 轻提示 |
+| `app.settings` | `get` / `set` / `all`，按插件隔离持久化；字段声明写在清单的 `settings`（由构建工具写入），宿主据此回填默认值并渲染设置界面 |
+| `app.i18n` | `t(key, vars)`、`addMessages(locales, defaultLocale?)` 与 `language()`；语言码用宿主形态（`zh-CN`、`en-US`） |
+| `app.theme` | `appearance`、`applyCodeHighlightTheme(light, dark)`、`subscribe(listener)`、`codeHighlightThemeDefaults()` |
+| `app.dialogs` | `pickFile(options?)` 与 `confirm(options)`（无原生环境降级为取消，不抛错） |
+| `app.toast` | `info` / `success` / `error` 轻提示 |
 | `app.log` | `info` / `warn` / `error`，统一进宿主日志 |
 | `app.workspace` | 活动文件路径、文档目录、打开文件、注册自定义文件编辑器 |
-| `app.editor` | 插入文本、是否可编辑、注册嵌入预览、解析嵌入引用语法 |
+| `app.editor` | 插入文本、是否可编辑、注册嵌入预览、解析嵌入引用语法、7 个编辑器贡献注册点 |
 | `app.documents` | 以给定内容新建并打开临时（未保存）文档 |
+| `app.exporters` / `app.imageUploader` / `app.agent` | 导出器、图片上传器、宿主 Agent 能力（`available` / `run` / `present`） |
 
 另有 `app.version` / `app.edition`（`'full' | 'lite'`）用于宿主版本与发行版分支判断。
 

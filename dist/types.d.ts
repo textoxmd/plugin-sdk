@@ -1,9 +1,11 @@
 import type { Disposable } from './disposable.js';
 import type { AgentCapability } from './agent.js';
+import type { PluginDialogsApi } from './dialogs.js';
 import type { EditorContextMenuItemMeta, EditorExtension, FormatToolbarItemMeta, InsertCommandMeta, SelectionActionMeta, SyntaxHighlightContribution } from './editor/index.js';
 import type { PluginExporter } from './exporter.js';
 import type { PluginImageUploader } from './image-uploader.js';
 import type { SyntaxFeature } from './markdown/index.js';
+import type { PluginThemeApi } from './theme.js';
 /** 插件清单：只有元数据，能力一律由代码（`Plugin.onload`）注册，清单不承载能力投影。 */
 export interface PluginManifest {
     id: string;
@@ -276,8 +278,15 @@ export interface PluginApp {
          * 会静默回退到 `defaultLocale`。
          */
         addMessages(locales: Record<string, Record<string, unknown>>, defaultLocale?: string): void;
+        /** 当前界面语言（宿主语言码，如 `zh-CN`）；无语言上下文时为 `en`。 */
+        language(): string;
     };
+    /** 主题能力：应用/订阅代码块高亮配色，读当前外观。 */
+    readonly theme: PluginThemeApi;
+    /** 原生对话框能力：选文件 / 二次确认（无原生环境下降级为取消）。 */
+    readonly dialogs: PluginDialogsApi;
     toast: {
+        info(message: string): void;
         success(message: string): void;
         error(message: string): void;
     };

@@ -1,5 +1,6 @@
 import type { Disposable } from './disposable.js';
 import type { AgentCapability } from './agent.js';
+import type { PluginDialogsApi } from './dialogs.js';
 import type {
   EditorContextMenuItemMeta,
   EditorExtension,
@@ -11,6 +12,7 @@ import type {
 import type { PluginExporter } from './exporter.js';
 import type { PluginImageUploader } from './image-uploader.js';
 import type { SyntaxFeature } from './markdown/index.js';
+import type { PluginThemeApi } from './theme.js';
 
 /** 插件清单：只有元数据，能力一律由代码（`Plugin.onload`）注册，清单不承载能力投影。 */
 export interface PluginManifest {
@@ -288,8 +290,18 @@ export interface PluginApp {
      * 会静默回退到 `defaultLocale`。
      */
     addMessages(locales: Record<string, Record<string, unknown>>, defaultLocale?: string): void;
+    /** 当前界面语言（宿主语言码，如 `zh-CN`）；无语言上下文时为 `en`。 */
+    language(): string;
   };
-  toast: { success(message: string): void; error(message: string): void };
+  /** 主题能力：应用/订阅代码块高亮配色，读当前外观。 */
+  readonly theme: PluginThemeApi;
+  /** 原生对话框能力：选文件 / 二次确认（无原生环境下降级为取消）。 */
+  readonly dialogs: PluginDialogsApi;
+  toast: {
+    info(message: string): void;
+    success(message: string): void;
+    error(message: string): void;
+  };
   /**
    * 注册导出器；`labelKey` 写裸 key（相对本插件文案），宿主补插件 id 前缀。
    * 释放返回值即注销（原生「导出」菜单同步移除，插件的 `menuAction` 不再分派）。
