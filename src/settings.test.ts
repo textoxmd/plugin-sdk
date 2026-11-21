@@ -21,11 +21,24 @@ describe('applySettingsDefaults', () => {
     });
   });
 
-  it('ignores undeclared keys', () => {
+  it('keeps undeclared keys so a downgrade does not lose config', () => {
+    const fields: SettingsField[] = [{ key: 'a', type: 'text', labelKey: 'a', default: 'x' }];
+    expect(applySettingsDefaults(fields, { a: 'y', extra: 1 })).toEqual({ a: 'y', extra: 1 });
+  });
+
+  it('keeps undeclared keys as-is and only backfills missing declared keys', () => {
     expect(applySettingsDefaults(fields, { legacyKey: 'x' })).toEqual({
       apiKey: '',
       limit: 10,
       enabled: true,
+      legacyKey: 'x',
+    });
+    // 已存值优先于默认值：未声明键不被覆盖，声明键也不被回填改写
+    expect(applySettingsDefaults(fields, { apiKey: 'k', limit: 0, legacyKey: 2 })).toEqual({
+      apiKey: 'k',
+      limit: 0,
+      enabled: true,
+      legacyKey: 2,
     });
   });
 });
