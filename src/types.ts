@@ -149,7 +149,8 @@ export interface PluginApp {
   settings: {
     get<T>(key: string): T | undefined;
     set(key: string, value: unknown): Promise<void>;
-    all(): Record<string, unknown>;
+    /** 生效配置的只读快照（与 `onDidChange` 收到的形状一致，含默认值回填）。 */
+    all(): SettingsSnapshot;
     /** 订阅生效配置变更（含 `manifest.settings` 回填的默认值）；释放返回值即退订。 */
     onDidChange(listener: (snapshot: SettingsSnapshot) => void): Disposable;
   };

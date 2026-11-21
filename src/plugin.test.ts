@@ -90,7 +90,7 @@ function createApp() {
         settingsValues[key] = value;
         for (const listener of [...settingsListeners]) listener(snapshot());
       },
-      all: () => ({ ...settingsValues }),
+      all: () => snapshot(),
       onDidChange: (listener: (snapshot: SettingsSnapshot) => void) => {
         settingsListeners.add(listener);
         return toDisposable(() => {
