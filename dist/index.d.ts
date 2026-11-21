@@ -13,4 +13,5 @@ export * from './image-uploader.js';
 export * from './agent.js';
 export * from './theme.js';
 export * from './dialogs.js';
+export * from './code-highlight-themes.js';
 //# sourceMappingURL=index.d.ts.map
