@@ -75,6 +75,43 @@ export const manifest: PluginManifest = {
 
 另有 `app.version` / `app.edition`（`'full' | 'lite'`）用于宿主版本与发行版分支判断。
 
+## 编辑器贡献
+
+编辑器契约在 `@textox/plugin-sdk/editor`（ProseMirror 视图、NodeView、工具栏/菜单项），语法引擎契约在 `@textox/plugin-sdk/markdown`（`SyntaxFeature`、行内解析助手）；两者也经根入口转出。
+
+`app.editor` 的七个 `register*` 各登记一类贡献，均返回 `Disposable`（`dispose()` 即注销）：
+
+| 方法 | 说明 |
+|------|------|
+| `registerSyntaxFeature(feature)` | 语法功能：schema / markdown-it 插件 / 解析 / 序列化 / 装饰 / 输入规则 |
+| `registerExtension(extension)` | 编辑器扩展：ProseMirror `plugins` 与 `nodeViews` |
+| `registerFormatToolbarItem(item)` | 行内格式按钮（悬浮栏 + 顶部工具栏 + 激活态） |
+| `registerInsertCommand(command)` | 「插入块」命令（工具栏 / 斜杠菜单 / 快捷键共用的裸 slug） |
+| `registerContextMenuItem(item)` | 正文右键菜单项 |
+| `registerSelectionAction(action)` | 选区动作（释义等，不改 schema） |
+| `registerSyntaxHighlight(contribution)` | 代码块语法高亮（语言定义，可惰性加载） |
+
+`SyntaxFeature` 的最小形状：`{ name, inline }`（行内语法）或 `{ name, marks / nodes, mdItPlugins }`（块级 / 新节点）；按 `name` 去重（后注册原位覆盖）。
+
+```ts
+import type { SyntaxFeature } from '@textox/plugin-sdk/markdown';
+
+const feature: SyntaxFeature = {
+  name: 'demo',
+  marks: { demo: { toDOM: () => ['span', { class: 'demo' }, 0] } },
+  mdItPlugins: [],
+};
+const sub = app.editor.registerSyntaxFeature(feature);
+// 注册 / 注销后宿主不会自动重建编辑器：
+app.editor.requestReload();
+sub.dispose();
+app.editor.requestReload();
+```
+
+`registerExtension` 的 `nodeViews` 工厂返回 `NodeView` 即「我认领该节点」，返回 `null` 交给下一个贡献或内置视图。**DOM 结构必须在交给 ProseMirror 之前就绪**（不要挂载后再 `appendChild` 渲染容器），懒加载只延迟行为、不延迟结构；`ignoreMutation` 要放行插件私有渲染容器内部的变更。
+
+ProseMirror（`prosemirror-model` / `-state` / `-view` / `-inputrules`）由宿主经共享模块注入，插件**不要**自带副本：`instanceof` 与 schema/plugin 身份都会割裂。构建时同样要 external 掉它们（见下文 `SHARED_MODULES`）。
+
 ## 清单校验
 
 `validateManifest(raw)` 返回 `{ ok: true, manifest }` 或 `{ ok: false, issue }`。只有 `id` / `name` / `version` / `minAppVersion` / `author` 五项经校验，其余已知可选字段按类型过滤，未知字段原样保留（便于清单向前扩展）。

@@ -5,16 +5,16 @@
     "": {
       "name": "@textox/plugin-sdk",
       "dependencies": {
+        "@types/markdown-it": "^14.1.2",
+        "highlight.js": "^11.11.1",
+        "markdown-it": "^14.1.1",
+        "prosemirror-inputrules": "^1.5.1",
         "prosemirror-model": "^1.25.4",
         "prosemirror-state": "^1.4.4",
         "prosemirror-view": "^1.41.6",
       },
       "devDependencies": {
-        "@types/markdown-it": "^14.1.2",
         "happy-dom": "^17.4.4",
-        "highlight.js": "^11.11.1",
-        "markdown-it": "^14.1.1",
-        "prosemirror-inputrules": "^1.5.1",
         "typescript": "^5.8.2",
         "vitest": "^3.1.2",
       },
