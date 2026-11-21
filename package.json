@@ -24,7 +24,15 @@
     "test": "vitest run",
     "prepublishOnly": "npm run build && npm run test"
   },
+  "dependencies": {
+    "prosemirror-model": "^1.25.4",
+    "prosemirror-state": "^1.4.4",
+    "prosemirror-view": "^1.41.6"
+  },
   "devDependencies": {
+    "@types/markdown-it": "^14.1.2",
+    "markdown-it": "^14.1.1",
+    "prosemirror-inputrules": "^1.5.1",
     "typescript": "^5.8.2",
     "vitest": "^3.1.2"
   }
