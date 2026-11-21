@@ -26,50 +26,119 @@ export interface PluginManifest {
      */
     settings?: unknown[];
 }
-/** 声明式设置字段：宿主渲染控件，值存于插件 `data.json` 的 `settings` 键。 */
-export type SettingsField = {
+/**
+ * 设置字段的公共声明：分组与条件显示。
+ *
+ * 字段声明随 `manifest.json` 落盘（构建期由 `plugin-build` 写入，是纯 JSON），
+ * 所以这里只允许数据——任何能力都必须通过 id 引用，由宿主在运行期解析。
+ */
+export interface SettingsFieldBase {
+    /** 配置键：值存于插件 `data.json` 的 `settings`（`preset` 只作标识，不写值）。 */
     key: string;
+    /** 标签的 i18n key（相对本插件自己的文案命名空间）。 */
+    labelKey: string;
+    /** 说明文字的 i18n key；缺省不显示。 */
+    descriptionKey?: string;
+    /** 分区：同 `group` 的字段渲染在一起；缺省归入默认分区。 */
+    group?: string;
+    /** 分区标题的 i18n key。 */
+    groupLabelKey?: string;
+    /** 条件显示：仅当有效配置（已回填默认值）里 `values[key] === equals` 时显示该项。 */
+    visibleWhen?: {
+        key: string;
+        equals: unknown;
+    };
+}
+/**
+ * 承载存储值的字段的公共声明：值存于插件 `data.json` 的 `settings`。
+ *
+ * `preset` / `action` 不承载单值，故不继承它（也因此不带 `apply` 生效策略）。
+ */
+export interface SettingsValueFieldBase extends SettingsFieldBase {
+    /** 生效方式：`immediate` 立即生效（缺省），`restart` 下次启动生效。 */
+    apply?: 'immediate' | 'restart';
+}
+/** 单行文本 / 密码框；值存 `data.json` 的 `settings`。 */
+export interface SettingsTextField extends SettingsValueFieldBase {
     type: 'text' | 'password';
     default: string;
-    labelKey: string;
     placeholderKey?: string;
-} | {
-    key: string;
+}
+/** 数字输入框；值存 `data.json` 的 `settings`。 */
+export interface SettingsNumberField extends SettingsValueFieldBase {
     type: 'number';
     default: number;
-    labelKey: string;
     min?: number;
     max?: number;
     step?: number;
-} | {
-    key: string;
+}
+/** 开关；值存 `data.json` 的 `settings`。 */
+export interface SettingsBooleanField extends SettingsValueFieldBase {
     type: 'boolean';
     default: boolean;
-    labelKey: string;
-} | {
-    key: string;
+}
+/** 下拉单选；值存 `data.json` 的 `settings`（等于选中项的 `value`）。 */
+export interface SettingsSelectField extends SettingsValueFieldBase {
     type: 'select';
     default: string;
-    labelKey: string;
     options: Array<{
         value: string;
         labelKey: string;
     }>;
-} | SettingsActionField;
+}
+/**
+ * 模型配置选择器：值是宿主 Agent 配置里某条 profile 的 id，存 `data.json` 的 `settings`。
+ * 空串表示未绑定（插件据此判断自身能力是否可用）。
+ */
+export interface SettingsModelProfileField extends SettingsValueFieldBase {
+    type: 'modelProfile';
+    /** profile id；空串 = 未绑定。 */
+    default: string;
+}
+/**
+ * 颜色选择器：值存 `data.json` 的 `settings`，形如 `#f7d54e`。
+ * 宿主按 `<input type="color">` 的形态归一为小写 6 位十六进制。
+ */
+export interface SettingsColorField extends SettingsValueFieldBase {
+    type: 'color';
+    /** 形如 `#f7d54e`；3 位写法（`#fff`）也接受。 */
+    default: string;
+    /** 预设色板：存在时渲染「色板圆点 + 自定义取色器」，缺省回退单个取色器。 */
+    presets?: Array<{
+        value: string;
+        labelKey?: string;
+    }>;
+}
+/**
+ * 预设方案：选择一个选项即一次性写入**多个键**（`option.values`），**不承载自己的存储值**。
+ *
+ * 没有 `default`：预设是「写哪些键」的规则，不是值；它也不出现在 `settings.all()` 里。
+ * 当前选中项由宿主按有效配置与各选项的 `values` 匹配得出。
+ */
+export interface SettingsPresetField extends SettingsFieldBase {
+    type: 'preset';
+    options: Array<{
+        value: string;
+        labelKey: string;
+        /** 选中该项时写入的整组配置补丁（可覆盖多个键）。 */
+        values: Record<string, unknown>;
+    }>;
+}
 /**
  * 动作型设置项：点击即执行，**不承载存储值**（不参与默认值回填，也不出现在 `settings.all()`）。
- * 与 `text` / `number` 等值字段不同，它没有 `default`。
+ *
+ * 清单是 JSON，函数无法随清单落盘，所以这里只引用命令 id：插件在 `onload` 里用
+ * `addCommand({ id: '<command>', ... })` 注册同名命令，宿主按 id 分派；找不到命令即视为不可执行。
  */
-export interface SettingsActionField {
-    key: string;
+export interface SettingsActionField extends SettingsFieldBase {
     type: 'action';
-    labelKey: string;
-    descriptionKey?: string;
-    group?: string;
-    groupLabelKey?: string;
-    /** 执行动作；`app` 是本插件自己的能力面（可读写设置、发 toast 等）。 */
-    run(app: PluginApp): void | Promise<void>;
+    /** 命令 id（与 `addCommand` 注册的 `id` 完全一致）。 */
+    command: string;
 }
+/** 声明式设置字段：宿主渲染控件，值存于插件 `data.json` 的 `settings`。 */
+export type SettingsField = SettingsTextField | SettingsNumberField | SettingsBooleanField | SettingsSelectField | SettingsModelProfileField | SettingsColorField | SettingsPresetField | SettingsActionField;
+/** 承载存储值的字段（`preset` / `action` 除外）。 */
+export type SettingsValueField = Exclude<SettingsField, SettingsPresetField | SettingsActionField>;
 export interface CommandContribution {
     id: string;
     name: string;
