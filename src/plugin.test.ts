@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { toDisposable } from './disposable.js';
+import { toDisposable, type Disposable } from './disposable.js';
+import { validateManifest } from './manifest.js';
 import { Plugin } from './plugin.js';
 import type {
   CommandContribution,
@@ -9,6 +10,7 @@ import type {
   PluginApp,
   PluginManifest,
   SettingsField,
+  SettingsSnapshot,
 } from './types.js';
 
 const manifest: PluginManifest = {
@@ -23,6 +25,41 @@ function createApp() {
   const live = new Set<string>();
   const registered: Array<{ kind: ContributionKind; id: string; value: unknown }> = [];
   const disposals: string[] = [];
+  const settingsValues: Record<string, unknown> = {};
+  const settingsListeners = new Set<(snapshot: SettingsSnapshot) => void>();
+
+  const snapshot = (): SettingsSnapshot => ({
+    values: Object.freeze({ ...settingsValues }),
+    read: <T,>(key: string) => settingsValues[key] as T | undefined,
+  });
+
+  /** 模拟宿主：每个 register* 都返回可释放句柄，并在释放时记录一次。 */
+  const capability = (label: string) =>
+    vi.fn(() =>
+      toDisposable(() => {
+        disposals.push(label);
+      })
+    );
+
+  const editor: PluginApp['editor'] = {
+    insertText: vi.fn(),
+    canEdit: vi.fn(() => true),
+    registerEmbed: vi.fn((options: EmbedBridgeOptions) =>
+      toDisposable(() => {
+        disposals.push(`embed:${options.id}`);
+      })
+    ),
+    parseEmbedRef: vi.fn(() => null),
+    registerSyntaxFeature: capability('syntax'),
+    registerExtension: capability('extension'),
+    registerFormatToolbarItem: capability('formatToolbar'),
+    registerInsertCommand: capability('insertCommand'),
+    registerContextMenuItem: capability('contextMenu'),
+    registerSelectionAction: capability('selectionAction'),
+    registerSyntaxHighlight: capability('syntaxHighlight'),
+    requestReload: vi.fn(),
+  };
+
   const app = {
     version: '2.3.8',
     edition: 'full' as const,
@@ -45,18 +82,22 @@ function createApp() {
         })
       ),
     },
-    editor: {
-      insertText: vi.fn(),
-      canEdit: vi.fn(() => true),
-      registerEmbed: vi.fn((options: EmbedBridgeOptions) =>
-        toDisposable(() => {
-          disposals.push(`embed:${options.id}`);
-        })
-      ),
-      parseEmbedRef: vi.fn(() => null),
-    },
+    editor,
     documents: { createNewDocument: vi.fn(async () => {}) },
-    settings: { get: () => undefined, set: async () => {}, all: () => ({}) },
+    settings: {
+      get: <T,>(key: string) => settingsValues[key] as T | undefined,
+      set: async (key: string, value: unknown) => {
+        settingsValues[key] = value;
+        for (const listener of [...settingsListeners]) listener(snapshot());
+      },
+      all: () => ({ ...settingsValues }),
+      onDidChange: (listener: (snapshot: SettingsSnapshot) => void) => {
+        settingsListeners.add(listener);
+        return toDisposable(() => {
+          settingsListeners.delete(listener);
+        });
+      },
+    },
     i18n: {
       t: vi.fn((key: string, vars?: Record<string, unknown>) =>
         vars ? `${key}:${JSON.stringify(vars)}` : key
@@ -128,7 +169,7 @@ describe('Plugin', () => {
     const plugin = new Demo(app, manifest);
     expect(plugin.settings).toBe(app.settings);
 
-    const baseDecl: SettingsField[] | undefined = Plugin.settingsFields; // 基类默认不声明字段
+    const baseDecl: unknown[] | undefined = Plugin.settingsFields; // 基类默认不声明字段
     expect(baseDecl).toBeUndefined();
     expect(Demo.settingsFields).toHaveLength(1);
   });
@@ -201,5 +242,54 @@ describe('Plugin', () => {
     const command: CommandContribution = { id: 'hello', name: 'Hello', callback: () => {} };
     plugin.addCommand(command);
     expect(registered).toEqual([{ kind: 'command', id: 'hello', value: command }]);
+  });
+
+  it('registers editor capabilities and disposes them with the plugin', async () => {
+    const disposed: string[] = [];
+    const { app } = createApp();
+    vi.spyOn(app.editor, 'registerSyntaxFeature').mockImplementation(() =>
+      toDisposable(() => {
+        disposed.push('syntax');
+      })
+    );
+
+    class WithSyntaxFeature extends Plugin {
+      onload(): void {
+        this.disposables.add(this.app.editor.registerSyntaxFeature({ name: 'demo' }));
+      }
+    }
+
+    const plugin = new WithSyntaxFeature(app, manifest);
+    await plugin.onload();
+    plugin.dispose();
+
+    expect(app.editor.registerSyntaxFeature).toHaveBeenCalledWith({ name: 'demo' });
+    expect(disposed).toEqual(['syntax']);
+  });
+
+  it('stops notifying settings listeners once the subscription is disposed', async () => {
+    const { app } = createApp();
+    const seen: unknown[] = [];
+
+    // 契约只规定「返回 Disposable、回调收到快照」，通知时机由宿主决定（宿主实现见运行时）。
+    const subscription: Disposable = app.settings.onDidChange((snapshot) => {
+      seen.push(snapshot.read('limit'));
+    });
+
+    await app.settings.set('limit', 1);
+    subscription.dispose();
+    await app.settings.set('limit', 2);
+
+    expect(seen).toEqual([1]);
+  });
+
+  it('accepts declarative settings fields on the manifest', () => {
+    const settings: SettingsField[] = [
+      { key: 'limit', type: 'number', default: 10, labelKey: 'limit' },
+    ];
+    const result = validateManifest({ ...manifest, settings });
+
+    expect(result.ok).toBe(true);
+    expect(result.ok && result.manifest.settings).toEqual(settings);
   });
 });

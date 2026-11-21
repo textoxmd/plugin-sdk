@@ -13,6 +13,11 @@ export interface PluginManifest {
   defaultEnabled?: boolean;
   isDesktopOnly?: boolean;
   builtAgainst?: Record<string, string>;
+  /**
+   * 声明式设置字段（形状见 `SettingsField`，构建期由 `plugin-build` 写入）。
+   * 宿主据此回填缺省值与渲染设置页；`0.1.x` 的静态字段声明仍兼容一个版本。
+   */
+  settings?: unknown[];
 }
 
 /** 声明式设置字段：宿主渲染控件，值存于插件 `data.json` 的 `settings` 键。 */
@@ -33,6 +38,12 @@ export interface CommandContribution {
   name: string;
   callback: () => void | Promise<void>;
   defaultShortcut?: string;
+}
+
+/** 生效配置的只读快照（已回填 `manifest.settings` 的默认值）。 */
+export interface SettingsSnapshot {
+  readonly values: Readonly<Record<string, unknown>>;
+  read<T = unknown>(key: string): T | undefined;
 }
 
 export type ContributionKind = 'command';
@@ -87,6 +98,37 @@ export interface FileEditorBridgeOptions {
   capabilities?: { customSave?: boolean; externalModify?: boolean; exportable?: boolean };
 }
 
+/**
+ * 插件可见的编辑器能力面。
+ *
+ * `register*` 的贡献值一律声明为 `unknown`：本包是**不依赖 prosemirror** 的底层契约，
+ * 具体形状由 `@texto/plugin-sdk`（`editor.ts`）用声明合并收窄。
+ */
+export interface PluginEditorApi {
+  insertText(text: string): void;
+  canEdit(): boolean;
+  /** 解析嵌入引用语法（`![alt](src "title")`）；无法解析返回 null。 */
+  parseEmbedRef(text: string): { src: string; alt: string; title?: string } | null;
+  /** 注册嵌入（图片类引用）的预览渲染；返回值释放后预览不再接管该类型的新节点。 */
+  registerEmbed(options: EmbedBridgeOptions): Disposable;
+  /** 注册语法功能协调器（源保真 / verbatim 等）。 */
+  registerSyntaxFeature(feature: unknown): Disposable;
+  /** 注册编辑器扩展（ProseMirror 插件、NodeView 等）。 */
+  registerExtension(extension: unknown): Disposable;
+  /** 注册行内格式工具栏项。 */
+  registerFormatToolbarItem(item: unknown): Disposable;
+  /** 注册插入块命令。 */
+  registerInsertCommand(command: unknown): Disposable;
+  /** 注册正文右键菜单项。 */
+  registerContextMenuItem(item: unknown): Disposable;
+  /** 注册选区动作。 */
+  registerSelectionAction(action: unknown): Disposable;
+  /** 注册代码块语法高亮贡献。 */
+  registerSyntaxHighlight(contribution: unknown): Disposable;
+  /** 请求编辑器按最新运行期配置重建（贡献增删后由宿主调用）。 */
+  requestReload(): void;
+}
+
 /** 插件可见的宿主能力面；由宿主按插件 id 绑定实现。 */
 export interface PluginApp {
   readonly version: string;
@@ -99,14 +141,7 @@ export interface PluginApp {
     /** 注册自定义文件类型的编辑器（新建/打开该扩展名时由宿主加载）。 */
     registerFileEditor(options: FileEditorBridgeOptions): Disposable;
   };
-  editor: {
-    insertText(text: string): void;
-    canEdit(): boolean;
-    /** 注册嵌入（图片类引用）的预览渲染；返回值释放后预览不再接管该类型的新节点。 */
-    registerEmbed(options: EmbedBridgeOptions): Disposable;
-    /** 解析嵌入引用语法（`![alt](src "title")`）；无法解析返回 null。 */
-    parseEmbedRef(text: string): { src: string; alt: string; title?: string } | null;
-  };
+  editor: PluginEditorApi;
   documents: {
     /** 以给定内容新建临时（未保存）文档并打开；`extension` 决定编辑器类型。 */
     createNewDocument(options: { content: string; extension?: string }): Promise<void>;
@@ -115,6 +150,8 @@ export interface PluginApp {
     get<T>(key: string): T | undefined;
     set(key: string, value: unknown): Promise<void>;
     all(): Record<string, unknown>;
+    /** 订阅生效配置变更（含 `manifest.settings` 回填的默认值）；释放返回值即退订。 */
+    onDidChange(listener: (snapshot: SettingsSnapshot) => void): Disposable;
   };
   i18n: {
     t(key: string, vars?: Record<string, unknown>): string;

@@ -5,7 +5,6 @@ import type {
   FileEditorBridgeOptions,
   PluginApp,
   PluginManifest,
-  SettingsField,
 } from './types.js';
 
 /**
@@ -14,16 +13,25 @@ import type {
  * （释放本类登记的贡献）。`dispose()` 不调用 `onunload()`，两者职责不重叠。
  */
 export abstract class Plugin implements Disposable {
-  /** 声明式设置字段：宿主读它渲染设置页，值的读写走 `this.settings`。 */
-  static settingsFields?: SettingsField[];
+  /**
+   * 声明式设置字段（0.1.x 形态）：宿主曾据此回填默认值并渲染设置页。
+   *
+   * @deprecated 从 0.2.0 起字段声明写在清单里（`manifest.settings`，由构建工具写入）；
+   * 静态字段仅为 0.1.x 插件保留一个版本，宿主不再从它推默认值。
+   */
+  static settingsFields?: unknown[];
 
   private readonly store: DisposableStore;
+
+  /** 子类登记贡献用的容器：插件 `dispose()` 时统一释放（后注册先释放）。 */
+  protected readonly disposables: DisposableStore;
 
   constructor(
     readonly app: PluginApp,
     readonly manifest: PluginManifest,
   ) {
     this.store = new DisposableStore(`plugin:${manifest.id}`);
+    this.disposables = this.store;
   }
 
   abstract onload(): void | Promise<void>;
