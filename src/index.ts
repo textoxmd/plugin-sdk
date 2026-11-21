@@ -1,4 +1,5 @@
 export * from './id.js';
+export * from './icon.js';
 export * from './disposable.js';
 export * from './types.js';
 export * from './manifest.js';
