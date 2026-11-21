@@ -1,4 +1,13 @@
 import type { Disposable } from './disposable.js';
+import type {
+  EditorContextMenuItemMeta,
+  EditorExtension,
+  FormatToolbarItemMeta,
+  InsertCommandMeta,
+  SelectionActionMeta,
+  SyntaxHighlightContribution,
+} from './editor/index.js';
+import type { SyntaxFeature } from './markdown/index.js';
 
 /** 插件清单：只有元数据，能力一律由代码（`Plugin.onload`）注册，清单不承载能力投影。 */
 export interface PluginManifest {
@@ -101,8 +110,8 @@ export interface FileEditorBridgeOptions {
 /**
  * 插件可见的编辑器能力面。
  *
- * `register*` 的贡献值一律声明为 `unknown`：本包是**不依赖 prosemirror** 的底层契约，
- * 具体形状由 `@texto/plugin-sdk`（`editor.ts`）用声明合并收窄。
+ * `register*` 的贡献值使用作者包自带的编辑器契约类型（`./editor` / `./markdown`），
+ * 宿主按同一份类型实现桥接。
  */
 export interface PluginEditorApi {
   insertText(text: string): void;
@@ -112,19 +121,19 @@ export interface PluginEditorApi {
   /** 注册嵌入（图片类引用）的预览渲染；返回值释放后预览不再接管该类型的新节点。 */
   registerEmbed(options: EmbedBridgeOptions): Disposable;
   /** 注册语法功能协调器（源保真 / verbatim 等）。 */
-  registerSyntaxFeature(feature: unknown): Disposable;
+  registerSyntaxFeature(feature: SyntaxFeature): Disposable;
   /** 注册编辑器扩展（ProseMirror 插件、NodeView 等）。 */
-  registerExtension(extension: unknown): Disposable;
+  registerExtension(extension: EditorExtension): Disposable;
   /** 注册行内格式工具栏项。 */
-  registerFormatToolbarItem(item: unknown): Disposable;
+  registerFormatToolbarItem(item: FormatToolbarItemMeta): Disposable;
   /** 注册插入块命令。 */
-  registerInsertCommand(command: unknown): Disposable;
+  registerInsertCommand(command: InsertCommandMeta): Disposable;
   /** 注册正文右键菜单项。 */
-  registerContextMenuItem(item: unknown): Disposable;
+  registerContextMenuItem(item: EditorContextMenuItemMeta): Disposable;
   /** 注册选区动作。 */
-  registerSelectionAction(action: unknown): Disposable;
+  registerSelectionAction(action: SelectionActionMeta): Disposable;
   /** 注册代码块语法高亮贡献。 */
-  registerSyntaxHighlight(contribution: unknown): Disposable;
+  registerSyntaxHighlight(contribution: SyntaxHighlightContribution): Disposable;
   /** 请求编辑器按最新运行期配置重建（贡献增删后由宿主调用）。 */
   requestReload(): void;
 }
