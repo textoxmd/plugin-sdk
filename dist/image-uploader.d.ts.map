@@ -1,0 +1,1 @@
+{"version":3,"file":"image-uploader.d.ts","sourceRoot":"","sources":["../src/image-uploader.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,SAAS,EAAE,MAAM,YAAY,CAAC;AAE5C;;;;GAIG;AACH,MAAM,WAAW,mBAAmB;IAClC,sBAAsB;IACtB,EAAE,CAAC,EAAE,MAAM,CAAC;IACZ,wCAAwC;IACxC,MAAM,CAAC,GAAG,EAAE,SAAS,EAAE,QAAQ,EAAE,MAAM,GAAG,OAAO,CAAC,MAAM,CAAC,CAAC;CAC3D"}

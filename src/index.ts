@@ -8,3 +8,6 @@ export * from './manifest.js';
 export * from './settings.js';
 export * from './plugin.js';
 export * from './shared-modules.js';
+export * from './exporter.js';
+export * from './image-uploader.js';
+export * from './agent.js';

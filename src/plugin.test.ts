@@ -105,6 +105,15 @@ function createApp() {
       addMessages: vi.fn(),
     },
     toast: { success: vi.fn(), error: vi.fn() },
+    exporters: { register: capability('exporter') },
+    imageUploader: { register: capability('imageUploader') },
+    agent: {
+      available: () => false,
+      run: () => ({ abort: () => {} }),
+      present: () => ({ abort: () => {} }),
+      profiles: { list: () => [] },
+      tools: { list: () => [], call: async () => ({ content: '' }) },
+    },
     log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
   } satisfies PluginApp;
   return { app, live, registered, disposals };

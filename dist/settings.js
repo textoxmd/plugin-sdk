@@ -9,6 +9,9 @@
 export function applySettingsDefaults(fields, values) {
     const result = { ...values };
     for (const field of fields) {
+        // `action` 不承载存储值（没有 `default`）：回填会让设置快照凭空多出一个键
+        if (field.type === 'action')
+            continue;
         const value = values[field.key];
         if (value === undefined)
             result[field.key] = field.default;

@@ -1,5 +1,8 @@
 import type { Disposable } from './disposable.js';
+import type { AgentCapability } from './agent.js';
 import type { EditorContextMenuItemMeta, EditorExtension, FormatToolbarItemMeta, InsertCommandMeta, SelectionActionMeta, SyntaxHighlightContribution } from './editor/index.js';
+import type { PluginExporter } from './exporter.js';
+import type { PluginImageUploader } from './image-uploader.js';
 import type { SyntaxFeature } from './markdown/index.js';
 /** 插件清单：只有元数据，能力一律由代码（`Plugin.onload`）注册，清单不承载能力投影。 */
 export interface PluginManifest {
@@ -52,7 +55,21 @@ export type SettingsField = {
         value: string;
         labelKey: string;
     }>;
-};
+} | SettingsActionField;
+/**
+ * 动作型设置项：点击即执行，**不承载存储值**（不参与默认值回填，也不出现在 `settings.all()`）。
+ * 与 `text` / `number` 等值字段不同，它没有 `default`。
+ */
+export interface SettingsActionField {
+    key: string;
+    type: 'action';
+    labelKey: string;
+    descriptionKey?: string;
+    group?: string;
+    groupLabelKey?: string;
+    /** 执行动作；`app` 是本插件自己的能力面（可读写设置、发 toast 等）。 */
+    run(app: PluginApp): void | Promise<void>;
+}
 export interface CommandContribution {
     id: string;
     name: string;
@@ -195,6 +212,22 @@ export interface PluginApp {
         success(message: string): void;
         error(message: string): void;
     };
+    /**
+     * 注册导出器；`labelKey` 写裸 key（相对本插件文案），宿主补插件 id 前缀。
+     * 释放返回值即注销（原生「导出」菜单同步移除，插件的 `menuAction` 不再分派）。
+     */
+    exporters: {
+        register(exporter: PluginExporter): Disposable;
+    };
+    /**
+     * 注册图片上传器（本地路径 → Markdown `src`）。同一插件内后注册者覆盖先注册者，
+     * 释放返回值即注销（宿主回退到「仅本地保存」）。
+     */
+    imageUploader: {
+        register(uploader: PluginImageUploader): Disposable;
+    };
+    /** 宿主 Agent 能力（模型配置未就绪时 `available()` 为 false）。 */
+    readonly agent: AgentCapability;
     log: {
         info(...args: unknown[]): void;
         warn(...args: unknown[]): void;

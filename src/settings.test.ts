@@ -41,4 +41,28 @@ describe('applySettingsDefaults', () => {
       legacyKey: 2,
     });
   });
+
+  it('skips action fields: no default value, no key in the snapshot', () => {
+    const withAction: SettingsField[] = [
+      { key: 'apiKey', type: 'text', default: '', labelKey: 'apiKey' },
+      { key: 'testConnection', type: 'action', labelKey: 'test', run: () => {} },
+    ];
+
+    const values = applySettingsDefaults(withAction, {});
+
+    // action 不承载存储值：回填会让设置快照 / 落盘凭空多出一个键
+    expect(values).toEqual({ apiKey: '' });
+    expect(Object.prototype.hasOwnProperty.call(values, 'testConnection')).toBe(false);
+  });
+
+  it('keeps an explicitly stored action key untouched', () => {
+    const withAction: SettingsField[] = [
+      { key: 'testConnection', type: 'action', labelKey: 'test', run: () => {} },
+    ];
+
+    // 旧版本遗留值/前向兼容：不声明为值字段，但也不主动丢弃
+    expect(applySettingsDefaults(withAction, { testConnection: 1 })).toEqual({
+      testConnection: 1,
+    });
+  });
 });
